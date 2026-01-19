@@ -1,0 +1,84 @@
+# ================================
+# Phishing Detection ML Project
+# ================================
+
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.pipeline import Pipeline
+import joblib
+
+# -------------------------------
+# 1. Load Dataset
+# -------------------------------
+# CSV must contain: 'text' and 'label'
+# label: 1 = phishing, 0 = legitimate
+
+data = pd.read_csv("../data/emails.csv")
+
+print(data.head())
+
+# -------------------------------
+# 2. Train-Test Split
+# -------------------------------
+X = data['text']
+y = data['label']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# -------------------------------
+# 3. Build ML Pipeline
+# -------------------------------
+pipeline = Pipeline([
+    ('tfidf', TfidfVectorizer(
+        lowercase=True,
+        stop_words='english',
+        max_df=0.95,
+        min_df=2
+    )),
+    ('model', LogisticRegression(max_iter=1000))
+])
+
+# -------------------------------
+# 4. Train Model
+# -------------------------------
+pipeline.fit(X_train, y_train)
+
+# -------------------------------
+# 5. Evaluate Model
+# -------------------------------
+y_pred = pipeline.predict(X_test)
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n")
+print(classification_report(y_test, y_pred))
+
+# -------------------------------
+# 6. Save Model
+# -------------------------------
+joblib.dump(pipeline, "../model/phishing_classifier.pkl")
+print("Model saved successfully")
+
+# -------------------------------
+# 7. Test on New Email
+# -------------------------------
+def predict_email(text):
+    prob = pipeline.predict_proba([text])[0]
+    label = pipeline.predict([text])[0]
+    confidence = np.max(prob) * 100
+    result = "🚨 Phishing" if label == 1 else "✅ Legitimate"
+    return result, round(confidence, 2)
+
+sample_email = "Your account will be locked. Click here to reset your password immediately."
+result, confidence = predict_email(sample_email)
+
+print("Email:", sample_email)
+print("Prediction:", result)
+print("Confidence:", confidence, "%")
