@@ -1,0 +1,13 @@
+phishing-detection-ml/
+│── data/
+│   └── emails.csv              # Synthetic / public dataset
+│── notebooks/
+│   └── phishing_detection.ipynb # EDA + training + evaluation
+│── model/
+│   └── phishing_classifier.pkl # Trained ML model
+│── src/
+│   └── predict.py              # Script for single-email prediction
+│── .gitignore
+│── README.md
+│── requirements.txt
+│── LICENSE
